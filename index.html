@@ -1,0 +1,165 @@
+import zipfile
+import os
+
+# Crear carpeta temporal para la web
+folder = "/mnt/data/sumayor33_web"
+os.makedirs(folder, exist_ok=True)
+
+# Contenido del index.html
+html_content = """<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sumayor33 - Ferretería</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    header { background: #2c3e50; color: white; padding: 15px 30px; text-align: center; }
+    nav { background: #34495e; display: flex; justify-content: center; padding: 10px; }
+    nav a { color: white; text-decoration: none; margin: 0 15px; font-weight: bold; }
+    nav a:hover { text-decoration: underline; }
+    .hero { background: url("https://images.unsplash.com/photo-1600380424311-29a6b26240b1") center/cover no-repeat;
+            height: 300px; display: flex; justify-content: center; align-items: center;
+            color: white; font-size: 2.5em; text-shadow: 2px 2px 8px rgba(0,0,0,0.7);}
+    .container { padding: 30px; }
+    .productos { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+    .producto { border: 1px solid #ddd; border-radius: 8px; padding: 15px; text-align: center; background: #f9f9f9;
+                transition: transform 0.2s; }
+    .producto:hover { transform: scale(1.05); }
+    .producto img { width: 100%; max-height: 200px; object-fit: contain; border-bottom: 1px solid #ddd; margin-bottom: 10px; }
+    .btn { background: #27ae60; color: white; border: none; padding: 10px 15px; cursor: pointer; border-radius: 5px; }
+    .btn:hover { background: #219150; }
+    #carrito { background: #ecf0f1; padding: 20px; border-radius: 8px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #bbb; padding: 10px; text-align: center; }
+    footer { background: #2c3e50; color: white; text-align: center; padding: 15px; margin-top: 30px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Ferretería Sumayor33</h1>
+    <p>Todo lo que necesitas para tu hogar y construcción</p>
+  </header>
+
+  <nav>
+    <a href="#inicio">Inicio</a>
+    <a href="#productos">Productos</a>
+    <a href="#carrito">Carrito</a>
+    <a href="#contacto">Contacto</a>
+  </nav>
+
+  <section class="hero" id="inicio">
+    Bienvenido a Sumayor33
+  </section>
+
+  <section class="container" id="productos">
+    <h2>Productos Destacados</h2>
+    <div class="productos">
+      <div class="producto">
+        <img src="https://images.unsplash.com/photo-1594322436404-5b91cb0a9963" alt="Martillo">
+        <h3>Martillo</h3>
+        <p>Martillo de acero forjado para trabajos pesados.</p>
+        <p><strong>$15.00</strong></p>
+        <button class="btn" onclick="agregarAlCarrito('Martillo', 15)">Agregar al carrito</button>
+      </div>
+      <div class="producto">
+        <img src="https://images.unsplash.com/photo-1598032899320-9ad3e4d6b2cf" alt="Destornilladores">
+        <h3>Juego de destornilladores</h3>
+        <p>Set completo de destornilladores de precisión.</p>
+        <p><strong>$25.00</strong></p>
+        <button class="btn" onclick="agregarAlCarrito('Juego de destornilladores', 25)">Agregar al carrito</button>
+      </div>
+      <div class="producto">
+        <img src="https://images.unsplash.com/photo-1588776814546-c22a5260a79f" alt="Taladro">
+        <h3>Taladro eléctrico</h3>
+        <p>Potente taladro inalámbrico de 20V.</p>
+        <p><strong>$120.00</strong></p>
+        <button class="btn" onclick="agregarAlCarrito('Taladro eléctrico', 120)">Agregar al carrito</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="container" id="carrito">
+    <h2>🛒 Carrito de Compras</h2>
+    <table id="tablaCarrito">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Precio</th>
+          <th>Cantidad</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <h3 id="totalCompra">Total: $0.00</h3>
+    <button class="btn" onclick="procesarPago()">Pagar</button>
+  </section>
+
+  <section class="container" id="contacto">
+    <h2>Contáctanos</h2>
+    <p>📍 Dirección: Av. Principal #123, Ciudad</p>
+    <p>📞 Teléfono: +34 600 123 456</p>
+    <p>✉️ Email: contacto@sumayor33.com</p>
+  </section>
+
+  <footer>
+    <p>&copy; 2025 Ferretería Sumayor33 - Todos los derechos reservados</p>
+  </footer>
+
+  <script>
+    let carrito = [];
+
+    function agregarAlCarrito(nombre, precio) {
+      const producto = carrito.find(p => p.nombre === nombre);
+      if (producto) {
+        producto.cantidad++;
+      } else {
+        carrito.push({ nombre, precio, cantidad: 1 });
+      }
+      mostrarCarrito();
+    }
+
+    function mostrarCarrito() {
+      const tabla = document.querySelector("#tablaCarrito tbody");
+      tabla.innerHTML = "";
+      let total = 0;
+      carrito.forEach(p => {
+        const fila = document.createElement("tr");
+        const subtotal = p.precio * p.cantidad;
+        fila.innerHTML = `
+          <td>${p.nombre}</td>
+          <td>$${p.precio.toFixed(2)}</td>
+          <td>${p.cantidad}</td>
+          <td>$${subtotal.toFixed(2)}</td>
+        `;
+        tabla.appendChild(fila);
+        total += subtotal;
+      });
+      document.getElementById("totalCompra").innerText = "Total: $" + total.toFixed(2);
+    }
+
+    function procesarPago() {
+      if (carrito.length === 0) {
+        alert("El carrito está vacío.");
+        return;
+      }
+      alert("✅ Gracias por tu compra en Sumayor33.\\nEl pago ha sido procesado con éxito.");
+      carrito = [];
+      mostrarCarrito();
+    }
+  </script>
+</body>
+</html>"""
+
+# Guardar archivo HTML
+html_path = os.path.join(folder, "index.html")
+with open(html_path, "w", encoding="utf-8") as f:
+    f.write(html_content)
+
+# Crear archivo ZIP
+zip_path = "/mnt/data/sumayor33_web.zip"
+with zipfile.ZipFile(zip_path, "w") as zipf:
+    zipf.write(html_path, arcname="index.html")
+
+zip_path
